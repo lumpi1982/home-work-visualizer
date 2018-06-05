@@ -1,0 +1,178 @@
+<html>
+<head>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/modules/series-label.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/modules/export-data.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+  <title>Skeleton</title>
+</head>
+<body>
+  <div id='app'>
+    <p>
+      <label for="">Wieviele Seiten Hausaufgaben hast du?</label>
+      <input type=number v-model='numberOfPages' />
+    </p>
+    <p>
+      <label for="">Wieviele Tage arbeitest du an der Hausaufgabe?</label>
+      <input type=number v-model='numberOfDays' />
+    </p>
+    <div v-for='(pageOnDay, index) in actualPagesDone'>
+      <span>
+        <label>Wieviele Seiten erledigst du an Tag {{ index+1 }}</label>
+        <input type="number" name="" v-model='actualPagesDone[index]'>
+      </span>
+    </div>
+    <button @click='addDay'>Add Day</button>
+    <button @click='deleteDay'>Delete Day</button>
+    Wirst du rechtzeitig fertig?
+    {{ sumOfHomeworkDone > numberOfPages ? 'Ja' : 'Nein, du hast um ' + (parseInt(numberOfPages)-parseInt(sumOfHomeworkDone)) + ' Seite(n) zu wenig geplant' }}
+    <div id="container"></div>
+  </div>
+  <script>
+  new Vue({
+    el: '#app',
+    data: {
+      numberOfPages: 24,
+      numberOfDays: 5,
+      actualPagesDone: [4,2,5,6,6]
+    },
+    methods: {
+      addDay: function() {
+        this.actualPagesDone.push('');
+      },
+      deleteDay: function() {
+        this.actualPagesDone.pop();
+      },
+
+    },
+    computed: {
+      sumOfHomeworkDone: function() {
+        return this.actualPagesDone.reduce(function(acc, val) { return acc + val; });
+      },
+      pagesPerDay: function() {
+        let dayArray=[];
+        let remainingPages=parseInt(this.numberOfPages);
+        let remainingDays=parseInt(this.numberOfDays);
+        for(i=0;i<this.numberOfDays;i++) {
+          console.log("Pages:" + remainingPages + "\nDays: " + remainingDays);
+          if(remainingPages%remainingDays===0) {
+            dayArray.push((remainingPages+(remainingPages%remainingDays))/remainingDays);
+
+          } else {
+            dayArray.push((remainingPages-(remainingPages%remainingDays))/remainingDays);
+          }
+          remainingPages-=dayArray[i];
+          remainingDays--;
+        }
+        // dayArray.push(0);
+        return dayArray.reverse();
+      },
+      remainingPagesPerDay: function() {
+        let dayArray=[];
+        let remainingPages=parseInt(this.numberOfPages);
+        let remainingDays=parseInt(this.numberOfDays);
+        for(i=0;i<this.numberOfDays;i++) {
+          console.log("Remaining Pages:" + remainingPages + "\nDays: " + remainingDays);
+          remainingPages-=this.pagesPerDay[i]
+          remainingDays--;
+          dayArray.push(remainingPages);
+        }
+        // dayArray.unshift(this.numberOfPages);
+        return dayArray;
+      },
+      remainingPagesPerDayActual: function() {
+        let dayArray=[];
+        let remainingPages=parseInt(this.numberOfPages);
+        let remainingDays=parseInt(this.numberOfDays);
+        for(i=0;i<this.numberOfDays;i++) {
+          console.log("Remaining Pages:" + remainingPages + "\nDays: " + remainingDays);
+          remainingPages-=this.actualPagesDone[i]
+          remainingDays--;
+          dayArray.push(remainingPages);
+        }
+        // dayArray.unshift(this.numberOfPages);
+        return dayArray;
+      },
+      updateGraph: function() {
+        let result= ' ' + this.numberOfPages + this.numberOfDays + this.actualPagesDone;
+        console.log('updating graph ...');
+        Highcharts.chart('container', {
+
+          title: {
+            text: 'Hausaufgaben Rechner'
+          },
+
+          subtitle: {
+            text: 'Powered by Gerhard'
+          },
+
+          yAxis: {
+            title: {
+              text: 'Hausaufgaben Seiten'
+            }
+          },
+          legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'middle'
+          },
+
+          plotOptions: {
+            series: {
+              label: {
+                connectorAllowed: false
+              },
+              pointStart: 1
+            },
+            line: {
+              animation: false
+            }
+          },
+
+          series: [{
+            name: 'Ist Seiten pro Tag',
+            data: this.actualPagesDone
+          }, {
+            name: 'Soll Seiten pro Tag',
+            data: this.pagesPerDay
+          }, {
+            name: 'Burndown Seiten pro Tag Soll',
+            data: this.remainingPagesPerDay
+          }, {
+            name: 'Burndown Seiten pro Tag Ist',
+            data: this.remainingPagesPerDayActual
+          }],
+
+          responsive: {
+            rules: [{
+              condition: {
+                maxWidth: 500
+              },
+              chartOptions: {
+                legend: {
+                  layout: 'horizontal',
+                  align: 'center',
+                  verticalAlign: 'bottom'
+                }
+              }
+            }]
+          }
+
+        });
+        return result;
+      },
+    },
+    watch: {
+      updateGraph: function(val) {
+        console.log('painting graph ...');
+        }
+      }
+    })
+    </script>
+    <script type="text/javascript">
+
+    </script>
+
+    </body>
+    </html>
